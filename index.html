@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a1a">
+    <title>Engine Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0f;
+            color: #e8e8e8;
+            overflow: hidden;
+            height: 100vh;
+            touch-action: pan-y;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 20px 15px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border-bottom: 1px solid #333;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #d4755e, #7a9b76);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 13px;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        /* Main workout area */
+        .workout-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .workout-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 25px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .workout-card.completed {
+            opacity: 0.5;
+        }
+
+        .day-number {
+            font-size: 14px;
+            font-weight: 600;
+            color: #7a9b76;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .day-date {
+            font-size: 16px;
+            color: #999;
+            margin-bottom: 25px;
+        }
+
+        .workout-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+
+        .workout-details {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .workout-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .workout-item p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #e8e8e8;
+        }
+
+        .intensity-badge {
+            display: inline-block;
+            background: #d4755e;
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .rest-day {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .rest-day .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .rest-day h2 {
+            font-size: 32px;
+            color: #7a9b76;
+            margin-bottom: 12px;
+        }
+
+        .rest-day p {
+            font-size: 16px;
+            color: #999;
+        }
+
+        /* Notes section */
+        .notes-section {
+            margin-top: 20px;
+        }
+
+        .notes-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #999;
+            margin-bottom: 8px;
+        }
+
+        .notes-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 12px;
+            color: #fff;
+            font-size: 15px;
+            font-family: inherit;
+            resize: none;
+            min-height: 80px;
+        }
+
+        .notes-input:focus {
+            outline: none;
+            border-color: #7a9b76;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .notes-display {
+            background: rgba(122, 155, 118, 0.1);
+            border: 1px solid rgba(122, 155, 118, 0.3);
+            border-radius: 12px;
+            padding: 12px;
+            color: #7a9b76;
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            padding: 20px 25px 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-complete {
+            background: linear-gradient(135deg, #7a9b76, #5a7a56);
+            color: #fff;
+        }
+
+        .btn-complete:active {
+            transform: scale(0.98);
+        }
+
+        .btn-complete:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        .btn-uncomplete {
+            background: rgba(212, 117, 94, 0.2);
+            color: #d4755e;
+            border: 1px solid #d4755e;
+        }
+
+        /* Navigation dots */
+        .nav-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 15px;
+            background: #1a1a1a;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #333;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: #7a9b76;
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .dot.completed {
+            background: #555;
+        }
+
+        /* Swipe indicators */
+        .swipe-hint {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 32px;
+            color: rgba(255, 255, 255, 0.2);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .swipe-hint.left {
+            left: 20px;
+        }
+
+        .swipe-hint.right {
+            right: 20px;
+        }
+
+        /* Completion overlay */
+        .completion-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .completion-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .completion-content {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .completion-content .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .completion-content h2 {
+            font-size: 28px;
+            color: #7a9b76;
+            margin-bottom: 12px;
+        }
+
+        .completion-content p {
+            font-size: 16px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>Engine Builder</h1>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Day 1 of 56</div>
+        </div>
+
+        <div class="workout-container" id="workoutContainer">
+            <!-- Workout cards will be dynamically inserted here -->
+        </div>
+
+        <div class="action-buttons" id="actionButtons">
+            <button class="btn btn-complete" id="completeBtn">Mark Complete</button>
+        </div>
+
+        <div class="nav-dots" id="navDots"></div>
+    </div>
+
+    <div class="completion-overlay" id="completionOverlay">
+        <div class="completion-content">
+            <div class="icon">🎉</div>
+            <h2>Program Complete!</h2>
+            <p>Excellent work on completing the Engine Builder protocol.</p>
+        </div>
+    </div>
+
+    <script>
+        const workouts = [
+            // Week 1
+            { day: 1, date: "SAT Feb 1", title: "Long Easy Run", details: "Run for a minimum of 45 minutes at an easy, conversational pace.", intensity: "2-4", isRest: false, week: 1, phase: "BUILD" },
+            { day: 2, date: "SUN Feb 2", title: "Rest Day", details: "", intensity: "", isRest: true, week: 1, phase: "BUILD" },
+            { day: 3, date: "MON Feb 3", title: "400m Run Intervals", details: "8 × 400 meter run at moderate tempo.\n\nWork:Rest ratio 1:1 (rest time equals work time).", intensity: "6", isRest: false, week: 1, phase: "BUILD" },
+            { day: 4, date: "TUE Feb 4", title: "Easy Run", details: "20-30 minute easy run at conversational pace.", intensity: "3-4", isRest: false, week: 1, phase: "BUILD" },
+            { day: 5, date: "WED Feb 5", title: "Mixed Intervals", details: "1 minute tempo row + 1 minute easy row. Repeat 5 times.\n\nRest 4 minutes.\n\n1 minute tempo bike + 1 minute easy bike. Repeat 5 times.", intensity: "6-7 / 1-4", isRest: false, week: 1, phase: "BUILD" },
+            { day: 6, date: "THU Feb 6", title: "Rest Day", details: "", intensity: "", isRest: true, week: 1, phase: "BUILD" },
+            { day: 7, date: "FRI Feb 7", title: "Rowing Pyramid", details: "Tempo row intervals:\n500m, 750m, 1000m, 1250m, 1000m, 750m, 500m\n\nWork:Rest ratio 1:0.75", intensity: "6", isRest: false, week: 1, phase: "BUILD" },
+            
+            // Week 2
+            { day: 8, date: "SAT Feb 8", title: "Long Easy Bike", details: "Bike for a minimum of 45 minutes at an easy, conversational pace.", intensity: "2-4", isRest: false, week: 2, phase: "BUILD" },
+            { day: 9, date: "SUN Feb 9", title: "Rest Day", details: "", intensity: "", isRest: true, week: 2, phase: "BUILD" },
+            { day: 10, date: "MON Feb 10", title: "Bike/Run Complex", details: "1 minute tempo bike + 1 minute tempo run.\n\nRepeat 7 times.\n\nRest 2 minutes between sets.", intensity: "7 / 6-7", isRest: false, week: 2, phase: "BUILD" },
+            { day: 11, date: "TUE Feb 11", title: "Easy Bike", details: "20-30 minute easy bike at conversational pace.", intensity: "3-4", isRest: false, week: 2, phase: "BUILD" },
+            { day: 12, date: "WED Feb 12", title: "500m Row Intervals", details: "8 × 500 meter tempo row.\n\nWork:Rest ratio 1:1", intensity: "6-7", isRest: false, week: 2, phase: "BUILD" },
+            { day: 13, date: "THU Feb 13", title: "Rest Day", details: "", intensity: "", isRest: true, week: 2, phase: "BUILD" },
+            { day: 14, date: "FRI Feb 14", title: "Extended Tempo Bike", details: "2 sets of 7.5 minute tempo bike.\n\nRest 3.5 minutes between sets.", intensity: "5-7", isRest: false, week: 2, phase: "BUILD" },
+            
+            // Week 3
+            { day: 15, date: "SAT Feb 15", title: "Long Easy Run", details: "Run for a minimum of 45 minutes at an easy, conversational pace.", intensity: "2-4", isRest: false, week: 3, phase: "BUILD - INTENSITY" },
+            { day: 16, date: "SUN Feb 16", title: "Rest Day", details: "", intensity: "", isRest: true, week: 3, phase: "BUILD - INTENSITY" },
+            { day: 17, date: "MON Feb 17", title: "Tempo Run Pyramid", details: "Tempo run intervals:\n400m, 800m, 1200m, 800m, 400m\n\nWork:Rest ratio 1:0.75", intensity: "6-7", isRest: false, week: 3, phase: "BUILD - INTENSITY" },
+            { day: 18, date: "TUE Feb 18", title: "Easy Row", details: "20-30 minute easy row at conversational pace.", intensity: "3-4", isRest: false, week: 3, phase: "BUILD - INTENSITY" },
+            { day: 19, date: "WED Feb 19", title: "Sprint Intervals", details: "Bike: 20 second sprint + 1 minute easy. Repeat 5 times consecutively.\n\nRest 4 minutes.\n\nRow: 30 second sprint + 1 minute easy. Repeat 5 times consecutively.", intensity: "8-9 / 1-2", isRest: false, week: 3, phase: "BUILD - INTENSITY" },
+            { day: 20, date: "THU Feb 20", title: "Rest Day", details: "", intensity: "", isRest: true, week: 3, phase: "BUILD - INTENSITY" },
+            { day: 21, date: "FRI Feb 21", title: "1000m Row Intervals", details: "3 × 1000 meter tempo row.\n\nWork:Rest ratio 2:1", intensity: "5-6", isRest: false, week: 3, phase: "BUILD - INTENSITY" },
+            
+            // Week 4
+            { day: 22, date: "SAT Feb 22", title: "Mixed Easy Session", details: "15-20 minutes each:\n• Easy row\n• Easy bike\n• Easy run\n\nAll at conversational pace.", intensity: "3-4", isRest: false, week: 4, phase: "BUILD - CONSOLIDATION" },
+            { day: 23, date: "SUN Feb 23", title: "Rest Day", details: "", intensity: "", isRest: true, week: 4, phase: "BUILD - CONSOLIDATION" },
+            { day: 24, date: "MON Feb 24", title: "1500m Row Sets", details: "2 × 1500 meter tempo row.\n\nWork:Rest ratio 2:1\n\nRest 4 minutes, then repeat the set.", intensity: "6", isRest: false, week: 4, phase: "BUILD - CONSOLIDATION" },
+            { day: 25, date: "TUE Feb 25", title: "Easy Run", details: "20-30 minute easy run at conversational pace.", intensity: "3-4", isRest: false, week: 4, phase: "BUILD - CONSOLIDATION" },
+            { day: 26, date: "WED Feb 26", title: "Bike/Run Descending", details: "2 sets: 20 cal bike + 400m run (rest 3 min)\n2 sets: 15 cal bike + 400m run (rest 2.5 min)\n2 sets: 10 cal bike + 400m run", intensity: "5-7", isRest: false, week: 4, phase: "BUILD - CONSOLIDATION" },
+            { day: 27, date: "THU Feb 27", title: "Rest Day", details: "", intensity: "", isRest: true, week: 4, phase: "BUILD - CONSOLIDATION" },
+            { day: 28, date: "FRI Feb 28", title: "Hard/Easy Row", details: "150m hard row + 300m easy row.\n\nRepeat 3 times consecutively.\n\nRest 4 minutes, then repeat the entire set.", intensity: "8-9 / 1-4", isRest: false, week: 4, phase: "BUILD - CONSOLIDATION" },
+            
+            // Week 5
+            { day: 29, date: "SAT Mar 1", title: "Long Easy Run", details: "Run for 45+ minutes at an easy, conversational pace.", intensity: "2-4", isRest: false, week: 5, phase: "PEAK BUILD" },
+            { day: 30, date: "SUN Mar 2", title: "Rest Day", details: "", intensity: "", isRest: true, week: 5, phase: "PEAK BUILD" },
+            { day: 31, date: "MON Mar 3", title: "800m Run Intervals", details: "5 × 800 meter tempo run.\n\nWork:Rest ratio 1:0.75", intensity: "6-7", isRest: false, week: 5, phase: "PEAK BUILD" },
+            { day: 32, date: "TUE Mar 4", title: "Easy Row", details: "20-30 minute easy row at conversational pace.", intensity: "3-4", isRest: false, week: 5, phase: "PEAK BUILD" },
+            { day: 33, date: "WED Mar 5", title: "50 Cal Bike Sets", details: "2 × 50 calorie tempo bike.\n\nWork:Rest ratio 2:1", intensity: "6", isRest: false, week: 5, phase: "PEAK BUILD" },
+            { day: 34, date: "THU Mar 6", title: "Active Recovery", details: "Rest or very light 15 minute easy movement if desired.", intensity: "", isRest: true, week: 5, phase: "PEAK BUILD" },
+            { day: 35, date: "FRI Mar 7", title: "OPEN WF 26.1", details: "CrossFit Open Workout 26.1 with Lumos crew.\n\n⚠️ Workout due Monday, March 10", intensity: "OPEN", isRest: false, week: 5, phase: "PEAK BUILD" },
+            
+            // Week 6
+            { day: 36, date: "SAT Mar 8", title: "Hard Bike Descending", details: "3 × 12 cal hard bike (W:R 1:2)\nRest 3.5 min\n\n3 × 10 cal hard bike (W:R 1:2)\nRest 3.5 min\n\n3 × 8 cal hard bike (W:R 1:2)", intensity: "8-9", isRest: false, week: 6, phase: "OPEN PERFORMANCE" },
+            { day: 37, date: "SUN Mar 9", title: "Rest Day", details: "Assess if 26.1 retry is needed for Monday.", intensity: "", isRest: true, week: 6, phase: "OPEN PERFORMANCE" },
+            { day: 38, date: "MON Mar 10", title: "26.1 Retry or Easy", details: "Retry Open WF 26.1 if needed.\n\nOtherwise: 20-30 minute easy bike.\n\n⚠️ 26.1 DEADLINE TODAY", intensity: "3-4", isRest: false, week: 6, phase: "OPEN PERFORMANCE" },
+            { day: 39, date: "TUE Mar 11", title: "5 Min Tempo Bike", details: "4 × 5 minute tempo bike.\n\nRest 2.5 minutes between sets.", intensity: "5-7", isRest: false, week: 6, phase: "OPEN PERFORMANCE" },
+            { day: 40, date: "WED Mar 12", title: "Easy Row", details: "20 minute easy row at conversational pace.", intensity: "3-4", isRest: false, week: 6, phase: "OPEN PERFORMANCE" },
+            { day: 41, date: "THU Mar 13", title: "Active Recovery", details: "Rest or very light 15 minute easy movement if desired.", intensity: "", isRest: true, week: 6, phase: "OPEN PERFORMANCE" },
+            { day: 42, date: "FRI Mar 14", title: "OPEN WF 26.2", details: "CrossFit Open Workout 26.2 with Lumos crew.\n\n⚠️ Workout due Monday, March 17", intensity: "OPEN", isRest: false, week: 6, phase: "OPEN PERFORMANCE" },
+            
+            // Week 7
+            { day: 43, date: "SAT Mar 15", title: "Rowing Pyramid", details: "Tempo row intervals:\n500m, 750m, 1000m, 1500m, 1000m, 750m, 500m\n\nWork:Rest ratio 1:0.75 (max 3.5 min rest any set)", intensity: "6-7", isRest: false, week: 7, phase: "OPEN PERFORMANCE" },
+            { day: 44, date: "SUN Mar 16", title: "Rest Day", details: "Assess if 26.2 retry is needed for Monday.", intensity: "", isRest: true, week: 7, phase: "OPEN PERFORMANCE" },
+            { day: 45, date: "MON Mar 17", title: "26.2 Retry or Easy", details: "Retry Open WF 26.2 if needed.\n\nOtherwise: 20-30 minute easy run.\n\n⚠️ 26.2 DEADLINE TODAY", intensity: "3-4", isRest: false, week: 7, phase: "OPEN PERFORMANCE" },
+            { day: 46, date: "TUE Mar 18", title: "Bike/Run Sandwich", details: "1 min tempo bike + 200m hard run + 1 min tempo bike.\n\nRepeat 5 times.\n\nRest 2 minutes between sets.", intensity: "6-7 / 8-9", isRest: false, week: 7, phase: "OPEN PERFORMANCE" },
+            { day: 47, date: "WED Mar 19", title: "Easy Row", details: "20-30 minute easy row at conversational pace.", intensity: "3-4", isRest: false, week: 7, phase: "OPEN PERFORMANCE" },
+            { day: 48, date: "THU Mar 20", title: "Active Recovery", details: "Rest or very light 15 minute easy movement if desired.", intensity: "", isRest: true, week: 7, phase: "OPEN PERFORMANCE" },
+            { day: 49, date: "FRI Mar 21", title: "OPEN WF 26.3", details: "CrossFit Open Workout 26.3 with Lumos crew.\n\n⚠️ Workout due Monday, March 24", intensity: "OPEN", isRest: false, week: 7, phase: "OPEN PERFORMANCE" },
+            
+            // Week 8
+            { day: 50, date: "SAT Mar 22", title: "Light Mixed Session", details: "15-20 minutes each:\n• Easy row\n• Easy bike\n• Easy run\n\nKeep this light and easy.", intensity: "3-4", isRest: false, week: 8, phase: "PEAK WEEK" },
+            { day: 51, date: "SUN Mar 23", title: "Rest Day", details: "Assess if 26.3 retry is needed for Monday.", intensity: "", isRest: true, week: 8, phase: "PEAK WEEK" },
+            { day: 52, date: "MON Mar 24", title: "26.3 Retry", details: "Retry Open WF 26.3 if needed.\n\n⚠️ 26.3 FINAL DEADLINE TODAY", intensity: "OPEN", isRest: false, week: 8, phase: "PEAK WEEK" },
+            { day: 53, date: "TUE Mar 25", title: "🔥 TIME TRIAL RETEST", details: "60-CALORIE BIKE TIME TRIAL\n\nMeasure your gains!\n\nWarm up properly, then give it everything you've got.", intensity: "ALL OUT", isRest: false, week: 8, phase: "PEAK WEEK" },
+            { day: 54, date: "WED Mar 26", title: "Tempo Row Block", details: "12 minute tempo row.\n\nRow easy for 6-10 minutes before and after.", intensity: "6-7", isRest: false, week: 8, phase: "PEAK WEEK" },
+            { day: 55, date: "THU Mar 27", title: "4 Min Tempo Bike", details: "5 × 4 minute tempo bike.\n\nRest 2 minutes between sets.", intensity: "6-7", isRest: false, week: 8, phase: "PEAK WEEK" },
+            { day: 56, date: "FRI Mar 28", title: "Victory Lap", details: "Long easy bike for a minimum of 45 minutes.\n\nEnjoy this final session. You earned it.", intensity: "2-4", isRest: false, week: 8, phase: "PEAK WEEK" }
+        ];
+
+        let currentDay = 0;
+        let completionData = JSON.parse(localStorage.getItem('engineBuilderProgress')) || {};
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        function init() {
+            renderWorkouts();
+            updateProgress();
+            updateNavDots();
+            setupSwipeListeners();
+            
+            // Find first incomplete workout
+            for (let i = 0; i < workouts.length; i++) {
+                if (!completionData[i]) {
+                    currentDay = i;
+                    break;
+                }
+            }
+            
+            showDay(currentDay);
+        }
+
+        function renderWorkouts() {
+            const container = document.getElementById('workoutContainer');
+            container.innerHTML = '';
+            
+            workouts.forEach((workout, index) => {
+                const card = document.createElement('div');
+                card.className = `workout-card ${completionData[index] ? 'completed' : ''}`;
+                card.id = `workout-${index}`;
+                
+                if (workout.isRest) {
+                    card.innerHTML = `
+                        <div class="rest-day">
+                            <div class="icon">🛌</div>
+                            <h2>Rest Day</h2>
+                            <p>Recovery is part of the protocol</p>
+                        </div>
+                        ${completionData[index] ? `
+                            <div class="notes-section">
+                                <div class="notes-label">Notes</div>
+                                <div class="notes-display">${completionData[index].notes || 'No notes'}</div>
+                            </div>
+                        ` : `
+                            <div class="notes-section">
+                                <div class="notes-label">Notes (optional)</div>
+                                <textarea class="notes-input" id="notes-${index}" placeholder="How did you feel today?"></textarea>
+                            </div>
+                        `}
+                    `;
+                } else {
+                    card.innerHTML = `
+                        <div class="day-number">Day ${workout.day}</div>
+                        <div class="day-date">${workout.date}</div>
+                        <div class="workout-title">${workout.title}</div>
+                        <div class="workout-details">
+                            <div class="workout-item">
+                                <p>${workout.details.replace(/\n/g, '<br>')}</p>
+                                ${workout.intensity ? `<span class="intensity-badge">RPE ${workout.intensity}</span>` : ''}
+                            </div>
+                        </div>
+                        ${completionData[index] ? `
+                            <div class="notes-section">
+                                <div class="notes-label">Notes</div>
+                                <div class="notes-display">${completionData[index].notes || 'No notes'}</div>
+                            </div>
+                        ` : `
+                            <div class="notes-section">
+                                <div class="notes-label">Workout Notes (optional)</div>
+                                <textarea class="notes-input" id="notes-${index}" placeholder="Time, distance, how it felt, etc."></textarea>
+                            </div>
+                        `}
+                    `;
+                }
+                
+                container.appendChild(card);
+            });
+        }
+
+        function showDay(index) {
+            const cards = document.querySelectorAll('.workout-card');
+            cards.forEach((card, i) => {
+                if (i < index) {
+                    card.style.transform = 'translateX(-100%)';
+                    card.style.opacity = '0';
+                } else if (i === index) {
+                    card.style.transform = 'translateX(0)';
+                    card.style.opacity = '1';
+                } else {
+                    card.style.transform = 'translateX(100%)';
+                    card.style.opacity = '0';
+                }
+            });
+            
+            currentDay = index;
+            updateActionButton();
+            updateNavDots();
+            updateProgress();
+        }
+
+        function updateActionButton() {
+            const btnContainer = document.getElementById('actionButtons');
+            const isCompleted = completionData[currentDay];
+            
+            if (isCompleted) {
+                btnContainer.innerHTML = `
+                    <button class="btn btn-uncomplete" onclick="uncompleteDay()">Mark Incomplete</button>
+                `;
+            } else {
+                btnContainer.innerHTML = `
+                    <button class="btn btn-complete" onclick="completeDay()">Mark Complete</button>
+                `;
+            }
+        }
+
+        function completeDay() {
+            const notesInput = document.getElementById(`notes-${currentDay}`);
+            const notes = notesInput ? notesInput.value : '';
+            
+            completionData[currentDay] = {
+                date: new Date().toISOString(),
+                notes: notes
+            };
+            
+            localStorage.setItem('engineBuilderProgress', JSON.stringify(completionData));
+            
+            // Check if this is the last workout
+            if (currentDay === workouts.length - 1) {
+                showCompletionOverlay();
+                return;
+            }
+            
+            // Move to next day
+            renderWorkouts();
+            setTimeout(() => {
+                showDay(currentDay + 1);
+            }, 300);
+        }
+
+        function uncompleteDay() {
+            delete completionData[currentDay];
+            localStorage.setItem('engineBuilderProgress', JSON.stringify(completionData));
+            renderWorkouts();
+            showDay(currentDay);
+        }
+
+        function updateProgress() {
+            const completed = Object.keys(completionData).length;
+            const total = workouts.length;
+            const percentage = (completed / total) * 100;
+            
+            document.getElementById('progressFill').style.width = `${percentage}%`;
+            document.getElementById('progressText').textContent = `Day ${currentDay + 1} of ${total} · ${completed} completed`;
+        }
+
+        function updateNavDots() {
+            const dotsContainer = document.getElementById('navDots');
+            dotsContainer.innerHTML = '';
+            
+            // Show dots for current week (7 days)
+            const currentWeek = Math.floor(currentDay / 7);
+            const startDay = currentWeek * 7;
+            const endDay = Math.min(startDay + 7, workouts.length);
+            
+            for (let i = startDay; i < endDay; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                if (i === currentDay) dot.classList.add('active');
+                if (completionData[i]) dot.classList.add('completed');
+                dot.onclick = () => showDay(i);
+                dotsContainer.appendChild(dot);
+            }
+        }
+
+        function setupSwipeListeners() {
+            const container = document.getElementById('workoutContainer');
+            
+            container.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+            
+            container.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+        }
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0 && currentDay < workouts.length - 1) {
+                    // Swipe left - next day
+                    showDay(currentDay + 1);
+                } else if (diff < 0 && currentDay > 0) {
+                    // Swipe right - previous day
+                    showDay(currentDay - 1);
+                }
+            }
+        }
+
+        function showCompletionOverlay() {
+            const overlay = document.getElementById('completionOverlay');
+            overlay.classList.add('show');
+            
+            setTimeout(() => {
+                overlay.classList.remove('show');
+                renderWorkouts();
+                showDay(currentDay);
+            }, 3000);
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
